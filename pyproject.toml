@@ -6,7 +6,10 @@ authors = ["Vitaliy Vorobyov <vitalik.w555@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-torch = "^1.13.0"
+torch = "^1.5.0"
+numpy = "^1.23.5"
+pytorch-lightning = "^1.8.3"
+torchvision = "^0.14.0"
 
 [tool.poetry.dev-dependencies]
 
