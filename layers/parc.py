@@ -4,18 +4,25 @@ from torch.nn.functional import conv2d
 from torch import nn
 
 class ParCUnit(torch.nn.Module):
-    def __init__(self, interpolation_points, in_channels, out_channels,
-                 image_height, image_width,
+    # Image_height, image_width -> size (int or tuple)
+    # In_channels==out_channels
+    # Fast Parc won't work with in_channels != out_channels
+    # And it will be able to perform only depthwise convolution
+    def __init__(self, interpolation_points, inner_channels,
+                 image_size,
                  interpolation_type="bilinear", orientation="H", 
-                 aggregate_channels = True):
+                 depthwise = False): # Depthwise -> True
         super().__init__()
 
         self.orientation = orientation
         self.interpolation_type = interpolation_type
+        image_height, image_width = image_size
+
+        in_channels, out_channels = inner_channels, inner_channels
 
         width_size, height_size = 1, 1
         self.groups = 1
-        if not aggregate_channels:
+        if depthwise:
             self.groups = in_channels
             in_channels = 1
         if orientation == "H":
@@ -60,20 +67,20 @@ class ParCUnit(torch.nn.Module):
 
 
 class ParCBlock(nn.Module):
-    def __init__(self, interpolation_points, in_channels, out_channels,
-                 image_height, image_width,
-                 interpolation_type = "bilinear", aggregate_channels = True):
+    def __init__(self, interpolation_points, inner_channels,
+                 image_size, # image_height x image_width
+                 interpolation_type = "bilinear", depthwise = False):
         super().__init__()
                 
         self.parc_h = ParCUnit(interpolation_points=interpolation_points, orientation="H",
-            in_channels=in_channels//2, out_channels=out_channels//2, 
-            image_height=image_height, image_width=image_width,
-            interpolation_type=interpolation_type, aggregate_channels=aggregate_channels)
+            inner_channels=inner_channels//2, 
+            image_size=image_size,
+            interpolation_type=interpolation_type, depthwise=depthwise)
                 
         self.parc_v = ParCUnit(interpolation_points=interpolation_points, orientation="V",
-            in_channels=in_channels//2, out_channels=out_channels//2, 
-            image_height=image_height, image_width=image_width,
-            interpolation_type=interpolation_type, aggregate_channels=aggregate_channels)
+            inner_channels=inner_channels//2, 
+            image_size=image_size,
+            interpolation_type=interpolation_type, depthwise=depthwise)
         
         
     def forward(self, input):

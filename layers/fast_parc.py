@@ -6,6 +6,9 @@ from torch.fft import fft, ifft
 
 
 class FastParCUnit(nn.Module):
+    # Interpolation
+    # conv_dim->orientation
+    # dim->image_size int or tuple
     def __init__(self, channels, dim, conv_dim='V'):
         assert conv_dim in ['V', 'H'], "You can choice only vertical (V) or horizontal (H) dimension"
         super().__init__()
