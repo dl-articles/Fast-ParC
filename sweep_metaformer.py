@@ -10,9 +10,9 @@ from trainers.imagenet_metaformer import ImageNetMetaFormer
 parser = argparse.ArgumentParser(
                     prog = 'Sweep MetaFormer')
 parser.add_argument('project_name', type=str)
-parser.add_argument('-e', type=str)
-parser.add_argument('-d', type=str)
-parser.add_argument('-s', type=int, default=42)
+parser.add_argument('-e', '--experiment', type=str)
+parser.add_argument('-d', '--data', type=str)
+parser.add_argument('-s', '--seed', type=int, default=42)
 
 sweep_config = {
   "method": "random",   # Random search
@@ -36,10 +36,10 @@ sweep_config = {
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    experiment = args['-e']
-    project = args['project_name']
-    dataroot = args['-d']
-    seed = args['-s']
+    experiment = args.experiment
+    project = args.project_name
+    dataroot = args.data
+    seed = args.seed
 
     torch.manual_seed(seed)
 
@@ -53,7 +53,7 @@ if __name__ == "__main__":
         model = ImageNetMetaFormer(data_dir=dataroot, lr=wandb.config.lr)
         trainer = Trainer(
             logger=wandb_logger,  # W&B integration
-            gpus=-1,  # use all GPU's
+            accelerator='auto',
             max_epochs=4  # number of epochs
         )
         trainer.fit(model)
