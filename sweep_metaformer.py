@@ -10,7 +10,7 @@ from trainers.imagenet_metaformer import ImageNetMetaFormer
 parser = argparse.ArgumentParser(
                     prog = 'Sweep MetaFormer')
 parser.add_argument('project_name', type=str)
-parser.add_argument('experiment_name', type=str)
+parser.add_argument('-e', type=str)
 parser.add_argument('-d', type=str)
 parser.add_argument('-s', type=int, default=42)
 
@@ -36,7 +36,7 @@ sweep_config = {
 
 if __name__ == "__main__":
     args = parser.parse_args()
-    experiment = args['experiment_name']
+    experiment = args['-e']
     project = args['project_name']
     dataroot = args['-d']
     seed = args['-s']
