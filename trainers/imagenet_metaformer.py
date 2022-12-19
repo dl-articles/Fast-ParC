@@ -53,7 +53,7 @@ class ImageNetMetaFormer(LightningModule):
             normalize,
         ])
         val_transform = transforms.Compose([
-            transforms.Scale(256),
+            transforms.Resize((256,256)),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             normalize,
