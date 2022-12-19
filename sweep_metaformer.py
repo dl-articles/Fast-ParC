@@ -46,7 +46,7 @@ if __name__ == "__main__":
 
     sweep_id = wandb.sweep(sweep_config, project=project)
     def sweep_iter():
-        wandb.init(name=experiment)
+        run = wandb.init(name=experiment)
         wandb_logger = WandbLogger()
 
         model = ImageNetMetaFormer(data_dir=dataroot, lr=wandb.config.lr)
@@ -56,6 +56,7 @@ if __name__ == "__main__":
             max_epochs=4  # number of epochs
         )
         trainer.fit(model)
+        run.finish()
 
 
     wandb.agent(sweep_id, function=sweep_iter)
