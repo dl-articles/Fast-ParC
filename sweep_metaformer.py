@@ -17,7 +17,7 @@ parser.add_argument('-s', '--seed', type=int, default=42)
 sweep_config = {
   "method": "random",   # Random search
   "metric": {           # We want to maximize val_acc
-      "name": "valid_acc",
+      "name": "val_acc",
       "goal": "maximize"
   },
   "parameters": {
@@ -45,9 +45,8 @@ if __name__ == "__main__":
 
 
     sweep_id = wandb.sweep(sweep_config, project=project)
-    run = wandb.init(name=experiment)
     def sweep_iter():
-
+        wandb.init(name=experiment)
         wandb_logger = WandbLogger()
 
         model = ImageNetMetaFormer(data_dir=dataroot, lr=wandb.config.lr)
