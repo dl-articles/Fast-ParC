@@ -1,34 +1,10 @@
-from timm.models import DropPath, trunc_normal_
-from timm.models.layers import LayerNorm
+from timm.models.layers import LayerNorm, DropPath, trunc_normal_, to_2tuple
 from torch import nn
 import torch
 import torch.functional as F
 
 from layers.parc_factory import ParcOperatorVariation, ParCOperator
 
-
-class SqEx(nn.Module):
-
-    def __init__(self, n_features, reduction=16):
-        super(SqEx, self).__init__()
-
-        if n_features % reduction != 0:
-            raise ValueError('n_features must be divisible by reduction (default = 16)')
-
-        self.linear1 = nn.Linear(n_features, n_features // reduction, bias=True)
-        self.nonlin1 = nn.ReLU(inplace=True)
-        self.linear2 = nn.Linear(n_features // reduction, n_features, bias=True)
-        self.nonlin2 = nn.Sigmoid()
-
-    def forward(self, x):
-
-        y = F.avg_pool2d(x, kernel_size=x.size()[2:4])
-        y = y.permute(0, 2, 3, 1)
-        y = self.nonlin1(self.linear1(y))
-        y = self.nonlin2(self.linear2(y))
-        y = y.permute(0, 3, 1, 2)
-        y = x * y
-        return y
 
 class LayerNormChannel(nn.Module):
     """
@@ -81,13 +57,14 @@ class Mlp(nn.Module):
         return x
 
 
-class MetaformerBlock(nn.Module):
+class MetaFormerBlock(nn.Module):
     def __init__(self,
                  dim,
                  drop_path=0.,
+                 use_parc = True,
                  layer_scale_init_value=1e-6,
                  variation=ParcOperatorVariation.FAST,
-                 pw_ratio=4.,
+                 mlp_ratio=4.,
                  global_kernel_size=14,
                  use_pe=True):
         super().__init__()
@@ -97,18 +74,18 @@ class MetaformerBlock(nn.Module):
                          global_kernel_size=global_kernel_size, use_pe=use_pe),
             ParCOperator(dim // 2, orientation='V', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe)
-        )
+        ) if use_parc else nn.Identity()
         self.gcc_2  = nn.Sequential(
             ParCOperator(dim//2, orientation='H', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe),
             ParCOperator(dim // 2, orientation='V', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe)
-        )
+        ) if use_parc else nn.Identity()
         self.norm = LayerNorm(dim, eps=1e-6)
         self.mlp = nn.Sequential(
-            nn.Linear(dim, pw_ratio * dim),
+            nn.Linear(dim, mlp_ratio * dim),
             nn.GELU(),
-            nn.Linear(pw_ratio * dim, dim)
+            nn.Linear(mlp_ratio * dim, dim)
         )
         self.channels_attention = nn.Parameter(layer_scale_init_value * torch.ones(dim),
                                                requires_grad=True) if layer_scale_init_value > 0 else None
@@ -132,7 +109,137 @@ class MetaformerBlock(nn.Module):
 
         return x
 
-class MetaFormer(nn.Module):
-    def __init__(self):
+def basic_blocks(dim,
+                 index,
+                 layers,
+                 mlp_ratio=4.,
+                 drop_path_rate=0.,
+                 layer_scale_init_value=1e-5,
+                 use_parc=True,
+                 use_pe=True,
+                 ):
+
+    blocks = []
+    for block_idx in range(layers[index]):
+        block_dpr = drop_path_rate * (
+            block_idx + sum(layers[:index])) / (sum(layers) - 1)
+        blocks.append(MetaFormerBlock(
+            dim,
+            use_parc=use_parc,
+            mlp_ratio=mlp_ratio,
+            drop_path=block_dpr,
+            use_pe=use_pe,
+            layer_scale_init_value=layer_scale_init_value,
+            ))
+    blocks = nn.Sequential(*blocks)
+
+    return blocks
+
+class PatchEmbed(nn.Module):
+    """
+    Patch Embedding that is implemented by a layer of conv.
+    Input: tensor in shape [B, C, H, W]
+    Output: tensor in shape [B, C, H/stride, W/stride]
+    """
+    def __init__(self, patch_size=16, stride=16, padding=0,
+                 in_chans=3, embed_dim=768, norm_layer=None):
         super().__init__()
+        patch_size = to_2tuple(patch_size)
+        stride = to_2tuple(stride)
+        padding = to_2tuple(padding)
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=patch_size,
+                              stride=stride, padding=padding)
+        self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
+
+    def forward(self, x):
+        x = self.proj(x)
+        x = self.norm(x)
+        return x
+
+class MetaFormer(nn.Module):
+    def __init__(self, layers, embed_dims=None,
+                 parcs=None, mlp_ratios=None,
+                 num_classes=1000,
+                 in_patch_size=7, in_stride=4, in_pad=2,
+                 downsamples=None, down_patch_size=3, down_stride=2, down_pad=1,
+                 add_pos_embs=None,
+                 drop_path_rate=0.,
+                 use_layer_scale=True, layer_scale_init_value=1e-5,
+                 **kwargs):
+
+        super().__init__()
+
+        self.num_classes = num_classes
+
+        self.patch_embed = PatchEmbed(
+            patch_size=in_patch_size, stride=in_stride, padding=in_pad,
+            in_chans=3, embed_dim=embed_dims[0])
+        if add_pos_embs is None:
+            add_pos_embs = [False] * len(layers)
+        if parcs is None:
+            parcs = [False] * len(layers)
+        # set the main block in network
+        network = []
+        for i in range(len(layers)):
+            stage = basic_blocks(embed_dims[i], i, layers,
+                                 use_parc=parcs[i],
+                                 mlp_ratio=mlp_ratios[i],
+                                 drop_path_rate=drop_path_rate,
+                                 use_pe =add_pos_embs[i],
+                                 layer_scale_init_value=layer_scale_init_value)
+            network.append(stage)
+            if i >= len(layers) - 1:
+                break
+            if downsamples[i] or embed_dims[i] != embed_dims[i + 1]:
+                # downsampling between two stages
+                network.append(
+                    PatchEmbed(
+                        patch_size=down_patch_size, stride=down_stride,
+                        padding=down_pad,
+                        in_chans=embed_dims[i], embed_dim=embed_dims[i + 1]
+                    )
+                )
+
+        self.network = nn.ModuleList(network)
+        self.norm = LayerNormChannel(embed_dims[-1])
+        self.head = nn.Linear(
+            embed_dims[-1], num_classes) if num_classes > 0 \
+            else nn.Identity()
+
+        self.apply(self.cls_init_weights)
+
+        # init for classification
+
+    def cls_init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+
+    def get_classifier(self):
+        return self.head
+
+    def reset_classifier(self, num_classes):
+        self.num_classes = num_classes
+        self.head = nn.Linear(
+            self.embed_dim, num_classes) if num_classes > 0 else nn.Identity()
+
+    def forward_embeddings(self, x):
+        x = self.patch_embed(x)
+        return x
+
+    def forward_tokens(self, x):
+        for idx, block in enumerate(self.network):
+            x = block(x)
+        return x
+
+    def forward(self, x):
+        # input embedding
+        x = self.forward_embeddings(x)
+        # through backbone
+        x = self.forward_tokens(x)
+        x = self.norm(x)
+        # for image classification
+        cls_out = self.head(x.mean([-2, -1]))
+        return cls_out
 
