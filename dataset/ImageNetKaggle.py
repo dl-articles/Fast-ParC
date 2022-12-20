@@ -15,7 +15,7 @@ class ImageNetKaggle(Dataset):
                     json_file = json.load(f)
                     for class_id, v in json_file.items():
                         if 0 < restrict_classes < classes_count:
-                            return
+                            break
                         self.syn_to_class[v[0]] = int(class_id)
                         classes_count += 1
         with open(os.path.join(dir_path, "ILSVRC2012_val_labels.json"), "rb") as f:
