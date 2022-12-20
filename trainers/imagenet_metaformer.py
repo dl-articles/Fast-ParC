@@ -40,7 +40,7 @@ class ImageNetMetaFormer(LightningModule):
 
         # Log validation loss (will be automatically averaged over an epoch)
         self.log('valid_loss', loss)
-        self.log('valid_acc', self.val_acc)
+        self.log('valid_acc', self.val_acc, prog_bar=True)
 
     def setup(self, stage=None):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],

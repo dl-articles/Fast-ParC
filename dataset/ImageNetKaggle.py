@@ -5,7 +5,7 @@ import json
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 class ImageNetKaggle(Dataset):
-    def __init__(self, root, split, restrict_classes = 100, transform=None):
+    def __init__(self, root, split, restrict_classes = 500, transform=None):
         self.samples = []
         self.targets = []
         self.transform = transform
