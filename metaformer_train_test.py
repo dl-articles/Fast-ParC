@@ -1,0 +1,32 @@
+import argparse
+
+import torch
+import wandb
+from pytorch_lightning import Trainer
+from pytorch_lightning.callbacks import TQDMProgressBar
+from pytorch_lightning.loggers import WandbLogger
+
+from trainers.imagenet_metaformer import ImageNetMetaFormer
+
+parser = argparse.ArgumentParser(
+                    prog = 'Train test MetaFormer')
+parser.add_argument('-d', '--data', type=str)
+parser.add_argument('-s', '--seed', type=int, default=42)
+
+
+
+
+if __name__ == "__main__":
+    args = parser.parse_args()
+    dataroot = args.data
+    seed = args.seed
+
+    torch.manual_seed(seed)
+
+    model = ImageNetMetaFormer(data_dir=dataroot, lr=wandb.config.lr)
+    trainer = Trainer(
+        accelerator='auto',
+        callbacks=[TQDMProgressBar(refresh_rate=20)],
+        max_epochs=4  # number of epochs
+    )
+    trainer.fit(model)
