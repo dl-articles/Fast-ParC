@@ -35,6 +35,6 @@ if __name__ == "__main__":
                    LearningRateMonitor("epoch"),
                    EarlyStopping(monitor='val_loss', patience=15, mode="min", min_delta=0.0000)],
         max_epochs=100,
-        logger = WandbLogger(project=project, experiment=experiment),
+        logger = WandbLogger(project=project, name=experiment),
     )
     trainer.fit(model, ckpt_path=checkpoint)
