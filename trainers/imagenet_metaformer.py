@@ -14,6 +14,7 @@ class ImageNetMetaFormer(LightningModule):
     def __init__(self, data_dir, lr = 1e-4, batch_size=32,
                  num_classes = 500, max_samples=None, weight_decay = 1e-2):
         super().__init__()
+        self.save_hyperparameters()
         self.model = metaformer_pppa_s12_224(num_classes=num_classes)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()

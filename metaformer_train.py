@@ -25,9 +25,14 @@ if __name__ == "__main__":
     checkpoint = args.checkpoint
     experiment = args.experiment
     project = args.project_name
-
     torch.manual_seed(seed)
+
+    logger = WandbLogger(project=project, name=experiment)
+
+
     model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4, num_classes=350, max_samples=1000)
+
+    logger.watch(model)
     trainer = Trainer(
         accelerator='auto',
         callbacks=[TQDMProgressBar(refresh_rate=20),
@@ -35,6 +40,6 @@ if __name__ == "__main__":
                    LearningRateMonitor("epoch"),
                    EarlyStopping(monitor='val_loss', patience=15, mode="min", min_delta=0.0000)],
         max_epochs=100,
-        logger = WandbLogger(project=project, name=experiment),
+        logger=logger,
     )
     trainer.fit(model, ckpt_path=checkpoint)
