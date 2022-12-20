@@ -2,17 +2,19 @@ import os
 from torch.utils.data import Dataset
 from PIL import Image
 import json
+
+dir_path = os.path.dirname(os.path.realpath(__file__))
 class ImageNetKaggle(Dataset):
     def __init__(self, root, split, transform=None):
         self.samples = []
         self.targets = []
         self.transform = transform
         self.syn_to_class = {}
-        with open("./imagenet_class_index.json", "rb") as f:
+        with open(os.path.join(dir_path, "imagenet_class_index.json"), "rb") as f:
                     json_file = json.load(f)
                     for class_id, v in json_file.items():
                         self.syn_to_class[v[0]] = int(class_id)
-        with open("./ILSVRC2012_val_labels.json", "rb") as f:
+        with open(os.path.join(dir_path, "ILSVRC2012_val_labels.json"), "rb") as f:
                     self.val_to_syn = json.load(f)
         samples_dir = os.path.join(root, "ILSVRC/Data/CLS-LOC", split)
         for entry in os.listdir(samples_dir):
