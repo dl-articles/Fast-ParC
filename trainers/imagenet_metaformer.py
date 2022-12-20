@@ -2,7 +2,7 @@ import torch
 from pytorch_lightning import LightningModule
 from torch import nn
 from torch.utils.data import DataLoader
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, F1Score
 import torchvision.transforms as transforms
 
 
@@ -12,14 +12,16 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 class ImageNetMetaFormer(LightningModule):
     def __init__(self, data_dir, lr = 1e-4, batch_size=32,
-                 num_classes = 500, weight_decay = 1e-2):
+                 num_classes = 500, max_samples=None, weight_decay = 1e-2):
         super().__init__()
         self.model = metaformer_pppa_s12_224(num_classes=num_classes)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
+        self.val_f1 = F1Score()
         self.batch_size = batch_size
         self.weight_decay = weight_decay
         self.num_classes = num_classes
+        self.max_samples = max_samples
         self.loss = nn.CrossEntropyLoss()
         self.lr = lr
         self.data_dir = data_dir
@@ -34,16 +36,16 @@ class ImageNetMetaFormer(LightningModule):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        '''used for logging metrics'''
         x, y = batch
         logits = self(x)
         loss = self.loss(logits, y)
         preds = torch.argmax(logits, dim=1)
         self.val_acc.update(preds, y)
+        self.val_f1.update(preds, y)
 
-        # Log validation loss (will be automatically averaged over an epoch)
         self.log('valid_loss', loss)
         self.log('valid_acc', self.val_acc, prog_bar=True)
+        self.log('valid_f1', self.val_f1, prog_bar=True)
 
     def setup(self, stage=None):
         normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -64,6 +66,7 @@ class ImageNetMetaFormer(LightningModule):
         ])
         self.imagenet_train = ImageNetKaggle(self.data_dir, split='train',
                                              restrict_classes=self.num_classes,
+                                             max_samples = self.max_samples,
                                              transform=train_transform)
         self.imagenet_val = ImageNetKaggle(self.data_dir, split='val',
                                            restrict_classes=self.num_classes,transform=val_transform)
@@ -75,4 +78,7 @@ class ImageNetMetaFormer(LightningModule):
         return DataLoader(self.imagenet_val, batch_size=self.batch_size)
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        lr_scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-2, steps_per_epoch=10, epochs=5)
+
+        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler,}
