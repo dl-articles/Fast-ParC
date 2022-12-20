@@ -13,7 +13,7 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 class ImageNetMetaFormer(LightningModule):
     def __init__(self, data_dir, lr = 1e-4, batch_size=32):
         super().__init__()
-        self.model = metaformer_pppa_s12_224()
+        self.model = metaformer_pppa_s12_224(num_classes=500)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
         self.batch_size = batch_size
