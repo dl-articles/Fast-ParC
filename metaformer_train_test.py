@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     torch.manual_seed(seed)
 
-    model = ImageNetMetaFormer(data_dir=dataroot, lr=wandb.config.lr)
+    model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4)
     trainer = Trainer(
         accelerator='auto',
         callbacks=[TQDMProgressBar(refresh_rate=20)],
