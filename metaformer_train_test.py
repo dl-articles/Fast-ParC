@@ -22,12 +22,14 @@ if __name__ == "__main__":
     seed = args.seed
 
     torch.manual_seed(seed)
-
+    print('Initializing Dataset')
     model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4)
+    print('Dataset initialized')
     trainer = Trainer(
         accelerator='auto',
         callbacks=[TQDMProgressBar(refresh_rate=20)],
         max_epochs=4,
         logger = CSVLogger(save_dir="logs/"),
     )
+    print("Training")
     trainer.fit(model)
