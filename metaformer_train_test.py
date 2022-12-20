@@ -23,7 +23,7 @@ if __name__ == "__main__":
 
     torch.manual_seed(seed)
     print('Initializing Dataset')
-    model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4)
+    model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4, num_classes=100)
     print('Dataset initialized')
     trainer = Trainer(
         accelerator='auto',

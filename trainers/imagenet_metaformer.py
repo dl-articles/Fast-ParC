@@ -11,13 +11,14 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 
 class ImageNetMetaFormer(LightningModule):
-    def __init__(self, data_dir, lr = 1e-4, batch_size=32):
+    def __init__(self, data_dir, lr = 1e-4, batch_size=32, num_classes = 500):
         super().__init__()
-        self.model = metaformer_pppa_s12_224(num_classes=500)
+        self.model = metaformer_pppa_s12_224(num_classes=num_classes)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
         self.batch_size = batch_size
-        self.loss = nn.NLLLoss()
+        self.num_classes = num_classes
+        self.loss = nn.CrossEntropyLoss()
         self.lr = lr
         self.data_dir = data_dir
 
@@ -59,8 +60,11 @@ class ImageNetMetaFormer(LightningModule):
             transforms.ToTensor(),
             normalize,
         ])
-        self.imagenet_train = ImageNetKaggle(self.data_dir, split='train', transform=train_transform)
-        self.imagenet_val = ImageNetKaggle(self.data_dir, split='val', transform=val_transform)
+        self.imagenet_train = ImageNetKaggle(self.data_dir, split='train',
+                                             restrict_classes=self.num_classes,
+                                             transform=train_transform)
+        self.imagenet_val = ImageNetKaggle(self.data_dir, split='val',
+                                           restrict_classes=self.num_classes,transform=val_transform)
 
     def train_dataloader(self):
         return DataLoader(self.imagenet_train, batch_size=self.batch_size, shuffle=True)
