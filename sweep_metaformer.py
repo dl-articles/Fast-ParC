@@ -22,11 +22,15 @@ sweep_config = {
   },
   "parameters": {
         "lr": {
-            # log uniform distribution between exp(min) and exp(max)
             "distribution": "log_uniform",
             "min": -11.512,   # exp(-9.21) = 1e-4
             "max": -4.61    # exp(-4.61) = 1e-2
-        }
+        },
+      "weight_decay": {
+            "distribution": "log_uniform",
+            "min": -11.512,   # exp(-9.21) = 1e-4
+            "max": -4.61    # exp(-4.61) = 1e-2
+      }
     }
 }
 

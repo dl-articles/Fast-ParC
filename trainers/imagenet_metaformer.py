@@ -11,12 +11,14 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 
 class ImageNetMetaFormer(LightningModule):
-    def __init__(self, data_dir, lr = 1e-4, batch_size=32, num_classes = 500):
+    def __init__(self, data_dir, lr = 1e-4, batch_size=32,
+                 num_classes = 500, weight_decay = 1e-2):
         super().__init__()
         self.model = metaformer_pppa_s12_224(num_classes=num_classes)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
         self.batch_size = batch_size
+        self.weight_decay = weight_decay
         self.num_classes = num_classes
         self.loss = nn.CrossEntropyLoss()
         self.lr = lr
@@ -73,4 +75,4 @@ class ImageNetMetaFormer(LightningModule):
         return DataLoader(self.imagenet_val, batch_size=self.batch_size)
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
+        return torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
