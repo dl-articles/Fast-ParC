@@ -4,7 +4,7 @@ import torch
 import wandb
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import TQDMProgressBar
-from pytorch_lightning.loggers import WandbLogger
+from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
 from trainers.imagenet_metaformer import ImageNetMetaFormer
 
@@ -27,6 +27,7 @@ if __name__ == "__main__":
     trainer = Trainer(
         accelerator='auto',
         callbacks=[TQDMProgressBar(refresh_rate=20)],
-        max_epochs=4  # number of epochs
+        max_epochs=4,
+        logger = CSVLogger(save_dir="logs/"),
     )
     trainer.fit(model)
