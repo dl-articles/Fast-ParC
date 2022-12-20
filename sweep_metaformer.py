@@ -17,7 +17,7 @@ parser.add_argument('-s', '--seed', type=int, default=42)
 sweep_config = {
   "method": "random",   # Random search
   "metric": {           # We want to maximize val_acc
-      "name": "val_acc",
+      "name": "valid_acc",
       "goal": "maximize"
   },
   "parameters": {
