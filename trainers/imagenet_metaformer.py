@@ -12,7 +12,7 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 class ImageNetMetaFormer(LightningModule):
     def __init__(self, data_dir, lr = 1e-4, batch_size=32,
-                 num_classes = 500, max_samples=None, burnin_steps=0, step_tolerance = None, lr_factor=0.5):
+                 num_classes = 500, max_samples=None,):
         super().__init__()
         self.save_hyperparameters()
         self.model = metaformer_pppa_s12_224(num_classes=num_classes)
@@ -21,10 +21,10 @@ class ImageNetMetaFormer(LightningModule):
         self.val_f1 = F1Score()
         self.train_acc = Accuracy()
         self.train_f1 = F1Score()
-        self.lr_factor = lr_factor
-        self.step_tolerance = step_tolerance
-        self.bad_steps = 0
-        self.burnin_steps = burnin_steps
+        # self.lr_factor = lr_factor
+        # self.step_tolerance = step_tolerance
+        # self.bad_steps = 0
+        # self.burnin_steps = burnin_steps
         self.batch_size = batch_size
         self.num_classes = num_classes
         self.max_samples = max_samples
@@ -41,19 +41,19 @@ class ImageNetMetaFormer(LightningModule):
 
         logits = self(x)
         loss = self.loss(logits, y)
-        optim = self.optimizers()
-
-        if self.step_tolerance and self.global_step > self.burnin_steps:
-            loss_item = loss.item()
-            if loss_item < self.min_loss:
-                self.min_loss = loss_item
-                self.bad_steps = 0
-            else:
-                self.bad_steps += 1
-
-            if self.bad_steps > self.step_tolerance:
-                self.lr = self.lr * self.lr_factor
-                optim.param_groups[0]['lr'] = self.lr
+        # optim = self.optimizers()
+        #
+        # if self.step_tolerance and self.global_step > self.burnin_steps:
+        #     loss_item = loss.item()
+        #     if loss_item < self.min_loss:
+        #         self.min_loss = loss_item
+        #         self.bad_steps = 0
+        #     else:
+        #         self.bad_steps += 1
+        #
+        #     if self.bad_steps > self.step_tolerance:
+        #         self.lr = self.lr * self.lr_factor
+        #         optim.param_groups[0]['lr'] = self.lr
 
 
         preds = torch.argmax(logits, dim=1)
@@ -114,9 +114,9 @@ class ImageNetMetaFormer(LightningModule):
         return DataLoader(self.imagenet_val, batch_size=self.batch_size)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
-        # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2, cooldown=2,
-        #                                                           factor=0.5,min_lr=1e-6)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=0.05)
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=3,
+                                                                  factor=0.5,min_lr=1e-12)
 
-        # return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler, 'monitor': 'train_loss'}
-        return optimizer
+        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler, 'monitor': 'valid_loss'}
+        # return optimizer
