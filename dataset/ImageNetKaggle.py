@@ -20,6 +20,7 @@ class ImageNetKaggle(Dataset):
                             break
                         self.syn_to_class[v[0]] = int(class_id)
                         classes_count += 1
+        print(self.syn_to_class)
         with open(os.path.join(dir_path, "ILSVRC2012_val_labels.json"), "rb") as f:
                     self.val_to_syn = json.load(f)
         samples_dir = os.path.join(root, "ILSVRC/Data/CLS-LOC", split)
