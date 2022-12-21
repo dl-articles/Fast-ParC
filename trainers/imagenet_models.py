@@ -63,6 +63,7 @@ class ImageNetModel(LightningModule):
             if self.bad_steps > self.step_tolerance:
                 self.lr = self.lr * self.lr_factor
                 optim.param_groups[0]['lr'] = self.lr
+                self.bad_steps = 0
 
         preds = torch.argmax(logits, dim=1)
         self.train_acc.update(preds, y)
