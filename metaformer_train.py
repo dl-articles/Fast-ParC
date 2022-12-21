@@ -18,7 +18,7 @@ parser.add_argument('-e', '--experiment', type=str)
 parser.add_argument('-c', '--classes', type=int, default=100)
 parser.add_argument('-n', '--samples', type=int, default=1000)
 parser.add_argument('-b', '--batch', type=int, default=32)
-parser.add_argument('-l', '--lr', type=int, default=1e-3)
+parser.add_argument('-l', '--lr', type=float, default=1e-3)
 
 
 
