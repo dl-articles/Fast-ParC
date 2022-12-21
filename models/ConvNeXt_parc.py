@@ -3,20 +3,15 @@ from layers.parc import ParCBlock
 
 class ParCNextNeck(nn.Module):
     def __init__(self, input_channels, hidden_channels, out_channels, image_size,
-                 interpolation_points = 10, fast = False):
+                 init_kernel_size = 10, fast = False):
         super().__init__()
         self.layernorm = nn.LayerNorm(normalized_shape=image_size)
         if not fast:
-            self.parc_block = ParCBlock(interpolation_points, input_channels,
+            self.parc_block = ParCBlock(input_channels, init_kernel_size, 
                                         image_size, depthwise=True)
         
         self.bottleneck_extender = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
-        self.bottleneck_reductor = nn.Conv2d(hidden_channels, input_channels, kernel_size=1)
-        
-        self.extend_channels_if_necessary = nn.Identity()
-        if input_channels != out_channels:
-            self.extend_channels_if_necessary = nn.Conv2d(in_channels=input_channels, out_channels=out_channels,
-                                                kernel_size=1)
+        self.bottleneck_reductor = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
 
         self.projector = nn.Identity()
         self.maxpool_if_necessary = nn.Identity()
@@ -32,7 +27,6 @@ class ParCNextNeck(nn.Module):
         x = self.bottleneck_extender(x)
         x = nn.GELU()(x)
         x = self.bottleneck_reductor(x)
-        x = self.extend_channels_if_necessary(x)
         x = self.maxpool_if_necessary(x)
         return x + self.projector(input)
 

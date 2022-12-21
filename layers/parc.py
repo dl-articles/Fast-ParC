@@ -8,17 +8,15 @@ class ParCUnit(torch.nn.Module):
     # In_channels==out_channels
     # Fast Parc won't work with in_channels != out_channels
     # And it will be able to perform only depthwise convolution
-    def __init__(self, interpolation_points, inner_channels,
-                 image_size,
-                 interpolation_type="bilinear", orientation="H", 
-                 depthwise = False): # Depthwise -> True
+    def __init__(self, channels, init_kernel_size, use_pe = True,
+                orientation="H", depthwise = False): # Depthwise -> True
         super().__init__()
 
         self.orientation = orientation
-        self.interpolation_type = interpolation_type
-        image_height, image_width = image_size
 
-        in_channels, out_channels = inner_channels, inner_channels
+        self.init_kernel_size = init_kernel_size
+        self.channels = channels
+        in_channels, out_channels = channels, channels
 
         width_size, height_size = 1, 1
         self.groups = 1
@@ -26,12 +24,9 @@ class ParCUnit(torch.nn.Module):
             self.groups = in_channels
             in_channels = 1
         if orientation == "H":
-            width_size = interpolation_points
-            image_height = 1
+            width_size = init_kernel_size
         if orientation == "V":
-            height_size = interpolation_points
-            image_width = 1
-        positional_codes_values = torch.rand(image_height, image_width)
+            height_size = init_kernel_size
 
         weights = torch.rand((out_channels, in_channels, height_size, width_size))
         weights = torch.nn.parameter.Parameter(weights)
@@ -39,8 +34,8 @@ class ParCUnit(torch.nn.Module):
 
         bias_tensor = torch.rand(out_channels)
         self.bias_parameters = torch.nn.parameter.Parameter(bias_tensor)
-
-        self.positional_encoding = torch.nn.parameter.Parameter(positional_codes_values)
+        if use_pe:
+            self.pe = nn.Parameter(torch.randn(channels, self.init_kernel_size, 1))
 
     def apply_convoution(self, X):
         target_width, target_height = 1, 1
@@ -51,14 +46,28 @@ class ParCUnit(torch.nn.Module):
 
         conv_parameters = None
         conv_parameters = F.interpolate(self.weights, size = (target_height, target_width),
-                                        mode = self.interpolation_type)
+                                        mode = "bilinear")
         
         output = conv2d(X, weight = conv_parameters, bias = self.bias_parameters, groups = self.groups)
-        output += self.positional_encoding
         return output
+
+    def interpolate(self, x, shape):
+        if self.orientation == 'V':
+            dim = shape[0]
+            reshaped = x.view(1, self.channels,  self.init_kernel_size, 1)
+            return nn.functional.interpolate(reshaped, (dim, 1), mode="bilinear")
+        dim = shape[1]
+        reshaped = x.view(1, self.channels, 1, self.init_kernel_size)
+        return nn.functional.interpolate(reshaped, (1, dim), mode="bilinear")    
         
+    def add_pos_embedding(self, x, shape):
+        if self.pe is None:
+            return x
+        return x + self.interpolate(self.pe, shape)
     
     def forward(self, X):
+        *_, H, W = X.shape
+        X = self.add_pos_embedding(X, (H, W))
         if self.orientation == "H":
             X_cat = torch.cat((X, X[:, :, :, :-1]), dim=-1)
         if self.orientation == "V":
@@ -67,21 +76,15 @@ class ParCUnit(torch.nn.Module):
 
 
 class ParCBlock(nn.Module):
-    def __init__(self, interpolation_points, inner_channels,
-                 image_size, # image_height x image_width
-                 interpolation_type = "bilinear", depthwise = False):
+    def __init__(self, channels, init_kernel_size, use_pe = True,
+                depthwise = False):
         super().__init__()
                 
-        self.parc_h = ParCUnit(interpolation_points=interpolation_points, orientation="H",
-            inner_channels=inner_channels//2, 
-            image_size=image_size,
-            interpolation_type=interpolation_type, depthwise=depthwise)
+        self.parc_h = ParCUnit(channels//2, init_kernel_size, use_pe = use_pe,
+                orientation="H", depthwise = depthwise)
                 
-        self.parc_v = ParCUnit(interpolation_points=interpolation_points, orientation="V",
-            inner_channels=inner_channels//2, 
-            image_size=image_size,
-            interpolation_type=interpolation_type, depthwise=depthwise)
-        
+        self.parc_v = ParCUnit(channels//2, init_kernel_size, use_pe = use_pe,
+                orientation="V", depthwise = depthwise)
         
     def forward(self, input):
         channels = input.shape[1]

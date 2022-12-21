@@ -3,12 +3,12 @@ from layers.parc import ParCBlock
 
 class ParCNeck(nn.Module):
     def __init__(self, input_channels, hidden_channels, out_channels, image_size,
-                 interpolation_points = 10, fast = False, seq_transition=False, project=False):
+                 init_kernel_size = 10, fast = False, seq_transition=False, project=False):
         super().__init__()
         self.downsampler = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
         if not fast:
-            self.transitioner = ParCBlock(interpolation_points, hidden_channels,
-                                         image_size=image_size)
+            self.transitioner = ParCBlock(hidden_channels, init_kernel_size, 
+                                        image_size, depthwise=True)
         self.upsampler = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
         self.batchnorm = nn.BatchNorm2d(hidden_channels)
         self.shortcut = nn.Identity()
