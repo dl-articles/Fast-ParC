@@ -12,7 +12,7 @@ class ImageNetKaggle(Dataset):
         self.targets = []
         self.transform = transform
         self.syn_to_class = {}
-        classes_count = 0
+        classes_count = 1
         with open(os.path.join(dir_path, "imagenet_class_index.json"), "rb") as f:
                     json_file = json.load(f)
                     for class_id, v in json_file.items():
