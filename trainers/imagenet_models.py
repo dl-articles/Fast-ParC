@@ -14,7 +14,7 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 class ImageNetModel(LightningModule):
     def __init__(self, data_dir, model_name, lr = 1e-4, batch_size=32,
-                 num_classes = 500, max_samples=None, weight_decay = 1e-2):
+                 num_classes = 500, max_samples=None,  step_tolerance = None, lr_factor=0.5):
         super().__init__()
         self.save_hyperparameters()
         self.softmax = nn.Softmax(dim=1)
@@ -23,11 +23,14 @@ class ImageNetModel(LightningModule):
         self.train_acc = Accuracy()
         self.train_f1 = F1Score()
         self.batch_size = batch_size
-        self.weight_decay = weight_decay
         self.num_classes = num_classes
         self.max_samples = max_samples
         self.loss = nn.CrossEntropyLoss()
+        self.min_loss = torch.Tensor(float(int))
         self.lr = lr
+        self.lr_factor = lr_factor
+        self.step_tolerance = step_tolerance
+        self.bad_steps = 0
         self.data_dir = data_dir
         if model_name=="metaformer":
             self.model = metaformer_pppa_s12_224(num_classes=num_classes)
@@ -47,15 +50,31 @@ class ImageNetModel(LightningModule):
 
         logits = self(x)
         loss = self.loss(logits, y)
+        optim = self.optimizers()
+        if self.step_tolerance:
+            if loss < self.min_loss:
+                self.min_loss = loss
+                self.bad_steps = 0
+            else:
+                self.bad_steps += 1
+
+            if self.bad_steps > self.step_tolerance:
+                self.lr = self.lr * self.lr_factor
+                optim.param_groups[0]['lr'] = self.lr
 
         preds = torch.argmax(logits, dim=1)
         self.train_acc.update(preds, y)
         self.train_f1.update(preds, y)
 
+        self.log('learning_rate', self.lr, prog_bar=True)
         self.log('train_loss', loss, prog_bar=True)
         self.log('train_acc', self.train_acc, prog_bar=True)
         self.log('train_f1', self.train_f1, prog_bar=True)
         return loss
+    def training_epoch_end(self, training_step_outputs):
+        if self.step_tolerance:
+            self.min_loss = torch.Tensor(float('inf'))
+            self.bad_steps = 0
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
@@ -101,8 +120,9 @@ class ImageNetModel(LightningModule):
         return DataLoader(self.imagenet_val, batch_size=self.batch_size)
 
     def configure_optimizers(self):
-        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, cooldown=5,
-                                                                  factor=0.1,min_lr=1e-12)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
+        # lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, cooldown=5,
+        #                                                           factor=0.1,min_lr=1e-12)
 
-        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler, 'monitor': 'valid_loss'}
+        # return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler, 'monitor': 'valid_loss'}
+        return optimizer
