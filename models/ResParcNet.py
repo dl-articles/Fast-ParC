@@ -18,7 +18,7 @@ class ParCNeck(nn.Module):
         if seq_transition:
             self.maxpool_if_necessary = nn.MaxPool2d(kernel_size=2, stride=2)
             self.shortcut = nn.Conv2d(input_channels, out_channels, kernel_size=1, stride=2)
-    
+
     def forward(self, input):
         x = self.downsampler(input)
         x = self.transitioner(x)
@@ -63,7 +63,7 @@ class ParCResNet50(nn.Module):
                                             image_size=(7, 7)) for i in range(2)]))
         self.avg_pool = nn.AvgPool2d(kernel_size=7)
         self.linear_classifier = nn.Linear(2048, 1000)
-    
+
     def forward(self, input):
         x = self.initial_maxpool_layer(self.initial_layer(input))
         x = self.first_seq(x)
