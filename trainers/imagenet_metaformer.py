@@ -19,6 +19,8 @@ class ImageNetMetaFormer(LightningModule):
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
         self.val_f1 = F1Score()
+        self.train_acc = Accuracy()
+        self.train_f1 = F1Score()
         self.batch_size = batch_size
         self.weight_decay = weight_decay
         self.num_classes = num_classes
@@ -33,7 +35,16 @@ class ImageNetMetaFormer(LightningModule):
     def training_step(self, batch, batch_nb):
         x, y = batch
 
-        loss = self.loss(self.model(x), y)
+        logits = self(x)
+        loss = self.loss(logits, y)
+
+        preds = torch.argmax(logits, dim=1)
+        self.train_acc.update(preds, y)
+        self.train_f1.update(preds, y)
+
+        self.log('train_loss', loss, prog_bar=True)
+        self.log('train_acc', self.train_acc, prog_bar=True)
+        self.log('train_f1', self.train_f1, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
