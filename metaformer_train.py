@@ -12,11 +12,11 @@ parser = argparse.ArgumentParser(
                     prog = 'Train MetaFormer')
 parser.add_argument('-d', '--data', type=str)
 parser.add_argument('-s', '--seed', type=int, default=42)
-parser.add_argument('-c', '--checkpoint', type=str)
+parser.add_argument('-p', '--checkpoint', type=str)
 parser.add_argument('project_name', type=str)
 parser.add_argument('-e', '--experiment', type=str)
-parser.add_argument('-c', '--classes', typd=int, default=100)
-parser.add_argument('-n', '--samples', typd=int, default=1000)
+parser.add_argument('-c', '--classes', type=int, default=100)
+parser.add_argument('-n', '--samples', type=int, default=1000)
 
 
 
