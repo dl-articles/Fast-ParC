@@ -42,6 +42,7 @@ class ImageNetModel(LightningModule):
             self.model = ParCResNet50(num_classes)
         if model_name=="parcconvnext":
             self.model = ParCConvNeXt(num_classes)
+        self.model.train()
 
     def forward(self, x):
         return self.softmax(self.model(x))
