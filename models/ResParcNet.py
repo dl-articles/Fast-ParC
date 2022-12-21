@@ -1,14 +1,14 @@
 from torch import nn
-from layers.parc import ParCUnit, ParCBlock
+from layers.parc import ParCBlock
 
 class ParCNeck(nn.Module):
-    def __init__(self, input_channels, hidden_channels, out_channels, image_height, image_width,
-                 fast = False, seq_transition=False, project=False):
+    def __init__(self, input_channels, hidden_channels, out_channels, image_size,
+                 init_kernel_size = 10, fast = False, seq_transition=False, project=False):
         super().__init__()
         self.downsampler = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
         if not fast:
-            self.transitioner = ParCBlock(10, hidden_channels, hidden_channels, 
-                                         image_height=image_height, image_width=image_width)
+            self.transitioner = ParCBlock(hidden_channels, init_kernel_size, 
+                                        image_size, depthwise=True)
         self.upsampler = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
         self.batchnorm = nn.BatchNorm2d(hidden_channels)
         self.shortcut = nn.Identity()
@@ -37,30 +37,30 @@ class ParCResNet50(nn.Module):
                                                in_channels=64, out_channels=64, padding=1)
 
         self.first_seq = nn.Sequential(*([ParCNeck(64, 64, 256, 
-                                            image_height=56, image_width=56, project=True),
+                                            image_size=(56, 56), project=True),
                                           ParCNeck(256, 64, 256, 
-                                            image_height=56, image_width=56),
+                                            image_size=(56, 56)),
                                           ParCNeck(256, 64, 128, 
-                                            image_height=56, image_width=56, seq_transition=True)]))
+                                            image_size=(56, 56), seq_transition=True)]))
 
         self.second_seq = nn.Sequential(*([ParCNeck(128, 128, 512, 
-                                            image_height=28, image_width=28, project=True)]+
+                                            image_size=(28, 28), project=True)]+
                                           [ParCNeck(512, 128, 512, 
-                                            image_height=28, image_width=28) for i in range(2)]+
+                                            image_size=(28, 28)) for i in range(2)]+
                                           [ParCNeck(512, 128, 256, 
-                                            image_height=28, image_width=28, seq_transition=True)]))
+                                            image_size=(28, 28), seq_transition=True)]))
 
         self.third_seq = nn.Sequential(*([ParCNeck(256, 256, 1024, 
-                                            image_height=14, image_width=14, project=True)]+
+                                            image_size=(14, 14), project=True)]+
                                          [ParCNeck(1024, 256, 1024, 
-                                            image_height=14, image_width=14) for i in range(4)]+
+                                            image_size=(14, 14)) for i in range(4)]+
                                          [ParCNeck(1024, 256, 512, 
-                                            image_height=14, image_width=14, seq_transition=True)]))
+                                            image_size=(14, 14), seq_transition=True)]))
 
         self.fourth_seq = nn.Sequential(*([ParCNeck(512, 512, 2048, 
-                                            image_height=7, image_width=7, project=True)]+
+                                            image_size=(7, 7), project=True)]+
                                           [ParCNeck(2048, 512, 2048, 
-                                            image_height=7, image_width=7) for i in range(2)]))
+                                            image_size=(7, 7)) for i in range(2)]))
         self.avg_pool = nn.AvgPool2d(kernel_size=7)
         self.linear_classifier = nn.Linear(2048, 1000)
     
