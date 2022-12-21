@@ -12,7 +12,7 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 class ImageNetMetaFormer(LightningModule):
     def __init__(self, data_dir, lr = 1e-4, batch_size=32,
-                 num_classes = 500, max_samples=None, step_tolerance = None, lr_factor=0.5):
+                 num_classes = 500, max_samples=None, burnin_steps=0, step_tolerance = None, lr_factor=0.5):
         super().__init__()
         self.save_hyperparameters()
         self.model = metaformer_pppa_s12_224(num_classes=num_classes)
@@ -24,6 +24,7 @@ class ImageNetMetaFormer(LightningModule):
         self.lr_factor = lr_factor
         self.step_tolerance = step_tolerance
         self.bad_steps = 0
+        self.burnin_steps = burnin_steps
         self.batch_size = batch_size
         self.num_classes = num_classes
         self.max_samples = max_samples
@@ -42,9 +43,10 @@ class ImageNetMetaFormer(LightningModule):
         loss = self.loss(logits, y)
         optim = self.optimizers()
 
-        if self.step_tolerance:
-            if loss < self.min_loss:
-                self.min_loss = loss
+        if self.step_tolerance and self.global_step > self.burnin_steps:
+            loss_item = loss.item()
+            if loss_item < self.min_loss:
+                self.min_loss = loss_item
                 self.bad_steps = 0
             else:
                 self.bad_steps += 1
@@ -66,7 +68,7 @@ class ImageNetMetaFormer(LightningModule):
 
     def training_epoch_end(self, training_step_outputs):
         if self.step_tolerance:
-            self.min_loss = torch.Tensor(float('inf'))
+            self.min_loss = float('inf')
             self.bad_steps = 0
 
     def validation_step(self, batch, batch_idx):
