@@ -4,19 +4,18 @@ from torch import nn
 from torch.utils.data import DataLoader
 from torchmetrics import Accuracy, F1Score
 import torchvision.transforms as transforms
-from torchvision.models import resnet50
+
 
 from config.metaformer_config import metaformer_pppa_s12_224
-from models.ConvNeXt_parc import ParCConvNeXt
-from models.ResParcNet import ParCResNet50
 from dataset.ImageNetKaggle import ImageNetKaggle
 
 
-class ImageNetModel(LightningModule):
-    def __init__(self, data_dir, model_name, lr = 1e-4, batch_size=32,
+class ImageNetMetaFormer(LightningModule):
+    def __init__(self, data_dir, lr = 1e-4, batch_size=32,
                  num_classes = 500, max_samples=None, weight_decay = 1e-2):
         super().__init__()
         self.save_hyperparameters()
+        self.model = metaformer_pppa_s12_224(num_classes=num_classes)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
         self.val_f1 = F1Score()
@@ -29,15 +28,6 @@ class ImageNetModel(LightningModule):
         self.loss = nn.CrossEntropyLoss()
         self.lr = lr
         self.data_dir = data_dir
-        if model_name=="metaformer":
-            self.model = metaformer_pppa_s12_224(num_classes=num_classes)
-        if model_name=="resnet":
-            self.model = resnet50()
-            self.model.fc = torch.nn.Linear(2048, num_classes)
-        if model_name=="parcresnet":
-            self.model = ParCResNet50(num_classes)
-        if model_name=="parcconvnext":
-            self.model = ParCConvNeXt(num_classes)
 
     def forward(self, x):
         return self.softmax(self.model(x))
