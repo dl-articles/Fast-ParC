@@ -15,7 +15,7 @@ class ImageNetResNet(LightningModule):
                  num_classes = 500, max_samples=None, weight_decay = 1e-2):
         super().__init__()
         self.save_hyperparameters()
-        self.model = ParCResNet50()
+        self.model = ParCResNet50(num_classes)
         self.softmax = nn.Softmax(dim=1)
         self.val_acc = Accuracy()
         self.val_f1 = F1Score()

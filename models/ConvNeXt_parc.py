@@ -31,7 +31,7 @@ class ParCNextNeck(nn.Module):
         return x + self.projector(input)
 
 class ParCConvNeXt(nn.Module):
-    def __init__(self):
+    def __init__(self, classes):
         super().__init__()
         self.initial_layer = nn.Conv2d(3, 48, 4, 4)
 
@@ -54,7 +54,7 @@ class ParCConvNeXt(nn.Module):
                                                image_size=(7, 7)) for i in range(3)]))
         
         self.avg_pool = nn.AvgPool2d(kernel_size=7)
-        self.linear_classifier = nn.Linear(384, 1000)
+        self.linear_classifier = nn.Linear(384, classes)
     
     def forward(self, input):
         x = self.initial_layer(input)

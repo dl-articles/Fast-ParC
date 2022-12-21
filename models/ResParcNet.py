@@ -28,7 +28,7 @@ class ParCNeck(nn.Module):
         return self.shortcut(input)+x
  
 class ParCResNet50(nn.Module):
-    def __init__(self) -> None:
+    def __init__(self, classes) -> None:
         super().__init__()
         
         self.initial_layer = nn.Conv2d(kernel_size=7, in_channels=3, out_channels=64, 
@@ -62,7 +62,7 @@ class ParCResNet50(nn.Module):
                                           [ParCNeck(2048, 512, 2048, 
                                             image_size=(7, 7)) for i in range(2)]))
         self.avg_pool = nn.AvgPool2d(kernel_size=7)
-        self.linear_classifier = nn.Linear(2048, 1000)
+        self.linear_classifier = nn.Linear(2048, classes)
 
     def forward(self, input):
         x = self.initial_maxpool_layer(self.initial_layer(input))
