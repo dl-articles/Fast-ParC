@@ -6,17 +6,21 @@ from torch.fft import fft, ifft
 
 
 class FastParCUnit(nn.Module):
-    def __init__(self, channels, global_kernel_size, orientation='V', use_pe=True):
+    def __init__(self,
+                 channels,
+                 init_kernel_size,
+                 use_pe=True,
+                 orientation='V'):
         assert orientation in ['V', 'H'], "You can choice only vertical (V) or horizontal (H) dimension"
         super().__init__()
         self.channels = channels
-        self.global_kernel_size = global_kernel_size
-        self.weights = nn.Parameter(torch.rand((channels, global_kernel_size)), requires_grad=True)
+        self.init_kernel_size = init_kernel_size
+        self.weights = nn.Parameter(torch.rand((channels, init_kernel_size)), requires_grad=True)
         self.bias = nn.Parameter(torch.rand(channels), requires_grad=True)
         self.orientation = orientation
         self.conv_dim_idx = -2 if orientation == 'V' else -1
         if use_pe:
-            self.pe = nn.Parameter(torch.randn(self.channels, self.global_kernel_size, 1))
+            self.pe = nn.Parameter(torch.randn(self.channels, self.init_kernel_size, 1))
 
     def process_weight_fft(self, shape):
         weights = self.interpolate(self.weights, shape)
@@ -25,10 +29,10 @@ class FastParCUnit(nn.Module):
     def interpolate(self, x, shape):
         if self.orientation == 'V':
             dim = shape[0]
-            reshaped = x.view(1, self.channels,  self.global_kernel_size, 1)
+            reshaped = x.view(1, self.channels, self.init_kernel_size, 1)
             return nn.functional.interpolate(reshaped, (dim, 1), mode="bilinear")
         dim = shape[1]
-        reshaped = x.view(1, self.channels, 1, self.global_kernel_size)
+        reshaped = x.view(1, self.channels, 1, self.init_kernel_size)
         return nn.functional.interpolate(reshaped, (1, dim), mode="bilinear")
 
     def add_pos_embedding(self, x, shape):

@@ -15,6 +15,8 @@ parser.add_argument('-s', '--seed', type=int, default=42)
 parser.add_argument('-c', '--checkpoint', type=str)
 parser.add_argument('project_name', type=str)
 parser.add_argument('-e', '--experiment', type=str)
+parser.add_argument('-c', '--classes', typd=int, default=100)
+parser.add_argument('-n', '--samples', typd=int, default=1000)
 
 
 
@@ -25,12 +27,14 @@ if __name__ == "__main__":
     checkpoint = args.checkpoint
     experiment = args.experiment
     project = args.project_name
+    classes = args.classes
+    max_samples = args.samples
     torch.manual_seed(seed)
 
     logger = WandbLogger(project=project, name=experiment)
 
 
-    model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4, num_classes=350, max_samples=1000)
+    model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4, num_classes=classes, max_samples=max_samples)
 
     logger.watch(model)
     trainer = Trainer(
@@ -42,7 +46,4 @@ if __name__ == "__main__":
         max_epochs=100,
         logger=logger,
     )
-    if checkpoint:
-        trainer.fit(model, ckpt_path=checkpoint)
-    else:
-        trainer.fit(model, ckpt_path=checkpoint)
+    trainer.fit(model, ckpt_path=checkpoint)
