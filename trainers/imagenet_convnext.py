@@ -6,7 +6,6 @@ from torchmetrics import Accuracy, F1Score
 import torchvision.transforms as transforms
 
 
-from config.metaformer_config import metaformer_pppa_s12_224
 from models.ConvNeXt_parc import ParCConvNeXt
 from dataset.ImageNetKaggle import ImageNetKaggle
 

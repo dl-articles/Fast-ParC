@@ -6,12 +6,11 @@ from torchmetrics import Accuracy, F1Score
 import torchvision.transforms as transforms
 
 
-from config.metaformer_config import metaformer_pppa_s12_224
 from models.ResParcNet import ParCResNet50
 from dataset.ImageNetKaggle import ImageNetKaggle
 
 
-class ImageNetConvNext(LightningModule):
+class ImageNetResNet(LightningModule):
     def __init__(self, data_dir, lr = 1e-4, batch_size=32,
                  num_classes = 500, max_samples=None, weight_decay = 1e-2):
         super().__init__()
