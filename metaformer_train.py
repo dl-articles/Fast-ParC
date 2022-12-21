@@ -34,15 +34,15 @@ if __name__ == "__main__":
     max_samples = args.samples
     batch = args.batch
     lr = args.lr
-    step_tolerance = args.step_tolerance
-    burnin = args.burnin
+    # step_tolerance = args.step_tolerance
+    # burnin = args.burnin
     torch.manual_seed(seed)
 
     logger = WandbLogger(project=project, name=experiment)
 
 
     model = ImageNetMetaFormer(data_dir=dataroot, lr=lr, batch_size=batch,
-                               num_classes=classes, burnin_steps=burnin, step_tolerance=step_tolerance,
+                               num_classes=classes,
                                max_samples=max_samples, )
 
     logger.watch(model)
@@ -50,8 +50,7 @@ if __name__ == "__main__":
         accelerator='auto',
         callbacks=[TQDMProgressBar(refresh_rate=20),
                    ModelCheckpoint(monitor="valid_f1", mode="max"),
-                   LearningRateMonitor("epoch"),
-                   EarlyStopping(monitor='valid_loss', patience=15, mode="min", min_delta=0.00)],
+                   LearningRateMonitor("epoch")],
         max_epochs=100,
         logger=logger,
     )
