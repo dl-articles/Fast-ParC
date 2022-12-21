@@ -40,9 +40,9 @@ if __name__ == "__main__":
     trainer = Trainer(
         accelerator='auto',
         callbacks=[TQDMProgressBar(refresh_rate=20),
-                   ModelCheckpoint(monitor="val_f1", mode="max"),
+                   ModelCheckpoint(monitor="valid_f1", mode="max"),
                    LearningRateMonitor("epoch"),
-                   EarlyStopping(monitor='val_loss', patience=15, mode="min", min_delta=0.0000)],
+                   EarlyStopping(monitor='valid_loss', patience=15, mode="min", min_delta=0.0000)],
         max_epochs=100,
         logger=logger,
     )

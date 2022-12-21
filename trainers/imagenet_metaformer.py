@@ -38,7 +38,7 @@ class ImageNetMetaFormer(LightningModule):
         logits = self(x)
         loss = self.loss(logits, y)
 
-        preds = torch.argmax(logits.cpu().numpy(), dim=1)
+        preds = torch.argmax(logits, dim=1)
         self.train_acc.update(preds, y)
         self.train_f1.update(preds, y)
 
@@ -51,7 +51,7 @@ class ImageNetMetaFormer(LightningModule):
         x, y = batch
         logits = self(x)
         loss = self.loss(logits, y)
-        preds = torch.argmax(logits.cpu().numpy(), dim=1)
+        preds = torch.argmax(logits, dim=1)
         self.val_acc.update(preds, y)
         self.val_f1.update(preds, y)
 
