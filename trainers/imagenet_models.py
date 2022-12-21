@@ -14,7 +14,7 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 class ImageNetModel(LightningModule):
     def __init__(self, data_dir, model_name, lr = 1e-4, batch_size=32,
-                 num_classes = 500, max_samples=None,  step_tolerance = None, lr_factor=0.5):
+                 num_classes = 500, max_samples=None, burnin_steps=0,  step_tolerance = None, lr_factor=0.5):
         super().__init__()
         self.save_hyperparameters()
         self.softmax = nn.Softmax(dim=1)
@@ -28,6 +28,7 @@ class ImageNetModel(LightningModule):
         self.loss = nn.CrossEntropyLoss()
         self.min_loss = torch.Tensor(float(int))
         self.lr = lr
+        self.burnin_steps = burnin_steps
         self.lr_factor = lr_factor
         self.step_tolerance = step_tolerance
         self.bad_steps = 0
@@ -51,7 +52,7 @@ class ImageNetModel(LightningModule):
         logits = self(x)
         loss = self.loss(logits, y)
         optim = self.optimizers()
-        if self.step_tolerance:
+        if self.step_tolerance and self.global_step > self.burnin_steps:
             if loss < self.min_loss:
                 self.min_loss = loss
                 self.bad_steps = 0

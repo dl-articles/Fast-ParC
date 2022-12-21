@@ -22,6 +22,7 @@ parser.add_argument('-b', '--batch', type=int, default=32)
 parser.add_argument('-l', '--lr', type=float, default=1e-3)
 parser.add_argument('-m', '--model', type=str)
 parser.add_argument('-t', '--step_tolerance', type=int)
+parser.add_argument('-b', '--burnin', type=int)
 
 
 
@@ -38,13 +39,14 @@ if __name__ == "__main__":
     model_name = args.model
     lr = args.lr
     step_tolerance = args.step_tolerance
+    burnin = args.burnin
     torch.manual_seed(seed)
 
     logger = WandbLogger(project=project, name=experiment, entity="dl-artcls")
 
     model = ImageNetModel(data_dir=dataroot, model_name=model_name, lr=lr,
-                          batch_size=batch, step_tolerance=step_tolerance, num_classes=classes,
-                          max_samples=max_samples)
+                          batch_size=batch, burnin_steps=burnin, step_tolerance=step_tolerance,
+                          num_classes=classes, max_samples=max_samples)
 
     logger.watch(model)
     trainer = Trainer(
