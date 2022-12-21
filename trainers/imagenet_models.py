@@ -115,10 +115,10 @@ class ImageNetModel(LightningModule):
                                            restrict_classes=self.num_classes,transform=val_transform)
 
     def train_dataloader(self):
-        return DataLoader(self.imagenet_train, batch_size=self.batch_size, shuffle=True, num_workers=4)
+        return DataLoader(self.imagenet_train, batch_size=self.batch_size, shuffle=True, num_workers=2)
 
     def val_dataloader(self):
-        return DataLoader(self.imagenet_val, batch_size=self.batch_size, num_workers=4)
+        return DataLoader(self.imagenet_val, batch_size=self.batch_size, num_workers=2)
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr)
