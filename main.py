@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from layers.fast_parc import FastParC
+from layers.fast_parc import FastParCUnit
 
 
 class ConvModel(nn.Module):
@@ -12,7 +12,8 @@ class ConvModel(nn.Module):
             nn.Conv2d(1, 9, 3),
             nn.Conv2d(9, 18, 3),
             nn.Conv2d(18, 24, 3),
-            FastParC(24, 22),
+            FastParCUnit(24, 12),
+            FastParCUnit(24, 12, orientation='H'),
             nn.MaxPool2d(kernel_size=2, stride=2),
         )
 

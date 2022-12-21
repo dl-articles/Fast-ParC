@@ -1,6 +1,6 @@
 import enum
 
-from layers.fast_parc import FastParC, FastParCUnit
+from layers.fast_parc import FastParCUnit
 from layers.parc import ParCUnit
 
 

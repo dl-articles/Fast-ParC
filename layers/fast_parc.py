@@ -6,35 +6,48 @@ from torch.fft import fft, ifft
 
 
 class FastParCUnit(nn.Module):
-    # Interpolation
-    # conv_dim->orientation
-    # dim->image_size int or tuple
-    def __init__(self, channels, global_kernel_size, image_size, depthwise=False, orientation='V'):
+    def __init__(self,
+                 channels,
+                 init_kernel_size,
+                 use_pe=True,
+                 orientation='V'):
         assert orientation in ['V', 'H'], "You can choice only vertical (V) or horizontal (H) dimension"
         super().__init__()
-        self.image_height = self.image_width = image_size
-        if type(image_size) is tuple and len(image_size) == 2:
-            self.image_height, self.image_width = image_size
         self.channels = channels
-        self.depthwise = depthwise
-        self.weights = nn.Parameter(torch.rand((channels, global_kernel_size)), requires_grad=True)
+        self.init_kernel_size = init_kernel_size
+        self.weights = nn.Parameter(torch.rand((channels, init_kernel_size)), requires_grad=True)
         self.bias = nn.Parameter(torch.rand(channels), requires_grad=True)
         self.orientation = orientation
         self.conv_dim_idx = -2 if orientation == 'V' else -1
+        if use_pe:
+            self.pe = nn.Parameter(torch.randn(self.channels, self.init_kernel_size, 1))
 
-    def process_weight_fft(self):
-        if self.orientation == 'V':
-            weights = self.weights.view(1, self.channels, 1, self.kernel)
-            weights = nn.functional.interpolate(weights, (1, self.image_width), mode="bilinear")
-        else:
-            weights = self.weights.view(1, self.channels, self.kernel, 1)
-            weights = nn.functional.interpolate(weights, (self.image_height, 1), mode="bilinear")
+    def process_weight_fft(self, shape):
+        weights = self.interpolate(self.weights, shape)
         return torch.conj(fft(weights, dim=self.conv_dim_idx))
 
+    def interpolate(self, x, shape):
+        if self.orientation == 'V':
+            dim = shape[0]
+            reshaped = x.view(1, self.channels, self.init_kernel_size, 1)
+            return nn.functional.interpolate(reshaped, (dim, 1), mode="bilinear")
+        dim = shape[1]
+        reshaped = x.view(1, self.channels, 1, self.init_kernel_size)
+        return nn.functional.interpolate(reshaped, (1, dim), mode="bilinear")
+
+    def add_pos_embedding(self, x, shape):
+        if self.pe is None:
+            return x
+
+        return x + self.interpolate(self.pe, shape)
+
     def forward(self, x):
+        B, C, H, W = x.shape
+        x = self.add_pos_embedding(x, (H, W))
+
         x = fft(x, dim=self.conv_dim_idx)
 
-        x = x * self.process_weight_fft()
+        x = x * self.process_weight_fft((H, W))
 
         x = ifft(x, dim=self.conv_dim_idx).real
 
