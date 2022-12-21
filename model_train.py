@@ -37,7 +37,7 @@ if __name__ == "__main__":
     model_name = args.model
     torch.manual_seed(seed)
 
-    logger = WandbLogger(project=project, name=experiment)
+    logger = WandbLogger(project=project, name=experiment, entity="dl-artcls")
 
     model = ImageNetModel(data_dir=dataroot, model_name=model_name, lr=1e-4, 
                           batch_size=batch, num_classes=classes, max_samples=max_samples)
