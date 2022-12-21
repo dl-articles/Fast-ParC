@@ -76,9 +76,9 @@ class MetaFormerBlock(nn.Module):
                          global_kernel_size=global_kernel_size, use_pe=use_pe)
         ) if use_parc else nn.Identity()
         self.gcc_2  = nn.Sequential(
-            ParCOperator(dim//2, orientation='H', variation=variation,
+            ParCOperator(dim//2, orientation='V', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe),
-            ParCOperator(dim // 2, orientation='V', variation=variation,
+            ParCOperator(dim // 2, orientation='H', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe)
         ) if use_parc else nn.Identity()
         self.norm = LayerNorm(dim, eps=1e-6)
