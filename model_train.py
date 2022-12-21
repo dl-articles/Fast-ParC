@@ -22,7 +22,7 @@ parser.add_argument('-b', '--batch', type=int, default=32)
 parser.add_argument('-l', '--lr', type=float, default=1e-3)
 parser.add_argument('-m', '--model', type=str)
 parser.add_argument('-t', '--step_tolerance', type=int)
-parser.add_argument('-b', '--burnin', type=int)
+parser.add_argument('-f', '--burnin', type=int)
 
 
 
