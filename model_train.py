@@ -1,12 +1,13 @@
 import argparse
 
 import torch
+import torchvision
 import wandb
 from pytorch_lightning import Trainer
 from pytorch_lightning.callbacks import TQDMProgressBar, ModelCheckpoint, LearningRateMonitor, EarlyStopping
 from pytorch_lightning.loggers import WandbLogger, CSVLogger
 
-from trainers.imagenet_resnet import ImageNetResNet
+from trainers.imagenet_models import ImageNetModel
 
 parser = argparse.ArgumentParser(
                     prog = 'Train MetaFormer')
@@ -18,6 +19,7 @@ parser.add_argument('-e', '--experiment', type=str)
 parser.add_argument('-c', '--classes', type=int, default=100)
 parser.add_argument('-n', '--samples', type=int, default=1000)
 parser.add_argument('-b', '--batch', type=int, default=32)
+parser.add_argument('-m', '--model', type=str)
 
 
 
@@ -31,12 +33,12 @@ if __name__ == "__main__":
     classes = args.classes
     max_samples = args.samples
     batch = args.batch
+    model_name = args.model
     torch.manual_seed(seed)
 
     logger = WandbLogger(project=project, name=experiment)
 
-
-    model = ImageNetResNet(data_dir=dataroot, lr=1e-4, batch_size=batch,
+    model = ImageNetModel(model_name=model_name, data_dir=dataroot, lr=1e-4, batch_size=batch,
                                num_classes=classes, max_samples=max_samples)
 
     logger.watch(model)
