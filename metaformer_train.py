@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(
                     prog = 'Train MetaFormer')
 parser.add_argument('-d', '--data', type=str)
 parser.add_argument('-s', '--seed', type=int, default=42)
-parser.add_argument('-c', '--checkpoint', type=str, default='./checkpoint/train.ckpt')
+parser.add_argument('-c', '--checkpoint', type=str)
 parser.add_argument('project_name', type=str)
 parser.add_argument('-e', '--experiment', type=str)
 
@@ -42,4 +42,7 @@ if __name__ == "__main__":
         max_epochs=100,
         logger=logger,
     )
-    trainer.fit(model, ckpt_path=checkpoint)
+    if checkpoint:
+        trainer.fit(model, ckpt_path=checkpoint)
+    else:
+        trainer.fit(model, ckpt_path=checkpoint)
