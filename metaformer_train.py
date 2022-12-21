@@ -18,7 +18,7 @@ parser.add_argument('-e', '--experiment', type=str)
 parser.add_argument('-c', '--classes', type=int, default=100)
 parser.add_argument('-n', '--samples', type=int, default=1000)
 parser.add_argument('-b', '--batch', type=int, default=32)
-
+parser.add_argument('-l', '--lr', type=float, default=1e-3)
 
 
 if __name__ == "__main__":
@@ -31,12 +31,13 @@ if __name__ == "__main__":
     classes = args.classes
     max_samples = args.samples
     batch = args.batch
+    lr = args.lr
     torch.manual_seed(seed)
 
     logger = WandbLogger(project=project, name=experiment)
 
 
-    model = ImageNetMetaFormer(data_dir=dataroot, lr=1e-4, batch_size=batch,
+    model = ImageNetMetaFormer(data_dir=dataroot, lr=lr, batch_size=batch,
                                num_classes=classes, max_samples=max_samples)
 
     logger.watch(model)
@@ -45,7 +46,7 @@ if __name__ == "__main__":
         callbacks=[TQDMProgressBar(refresh_rate=20),
                    ModelCheckpoint(monitor="valid_f1", mode="max"),
                    LearningRateMonitor("epoch"),
-                   EarlyStopping(monitor='valid_loss', patience=15, mode="min", min_delta=0.0000)],
+                   EarlyStopping(monitor='valid_loss', patience=15, mode="min", min_delta=0.00)],
         max_epochs=100,
         logger=logger,
     )

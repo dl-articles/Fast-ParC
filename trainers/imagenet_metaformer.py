@@ -92,7 +92,7 @@ class ImageNetMetaFormer(LightningModule):
 
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
-        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=5, cooldown=5,
-                                                                  factor=0.1,min_lr=1e-12)
+        lr_scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, patience=2, cooldown=2,
+                                                                  factor=0.5,min_lr=1e-12)
 
-        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler, 'monitor': 'valid_loss'}
+        return {'optimizer': optimizer, 'lr_scheduler': lr_scheduler, 'monitor': 'train_loss'}
