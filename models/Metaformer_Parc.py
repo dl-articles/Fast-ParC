@@ -168,7 +168,7 @@ class MetaFormer(nn.Module):
                  **kwargs):
 
         super().__init__()
-
+        print(num_classes)
         self.num_classes = num_classes
 
         self.patch_embed = PatchEmbed(
