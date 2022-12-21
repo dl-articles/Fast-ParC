@@ -26,7 +26,7 @@ class ImageNetModel(LightningModule):
         self.num_classes = num_classes
         self.max_samples = max_samples
         self.loss = nn.CrossEntropyLoss()
-        self.min_loss = torch.Tensor([float("Inf")])
+        self.min_loss = float("Inf")
         self.lr = lr
         self.burnin_steps = burnin_steps
         self.lr_factor = lr_factor
@@ -53,8 +53,9 @@ class ImageNetModel(LightningModule):
         loss = self.loss(logits, y)
         optim = self.optimizers()
         if self.step_tolerance and self.global_step > self.burnin_steps:
-            if loss < self.min_loss:
-                self.min_loss = loss
+            loss_item = loss.item()
+            if loss_item < self.min_loss:
+                self.min_loss = loss_item
                 self.bad_steps = 0
             else:
                 self.bad_steps += 1
@@ -74,7 +75,7 @@ class ImageNetModel(LightningModule):
         return loss
     def training_epoch_end(self, training_step_outputs):
         if self.step_tolerance:
-            self.min_loss = torch.Tensor([float('Inf')])
+            self.min_loss = float('Inf')
             self.bad_steps = 0
 
     def validation_step(self, batch, batch_idx):
