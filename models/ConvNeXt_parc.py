@@ -7,15 +7,15 @@ class ParCNextNeck(nn.Module):
         super().__init__()
         self.layernorm = nn.LayerNorm(normalized_shape=image_size)
 
-        self.depthwise_conv = nn.Sequential([nn.Conv2d(input_channels, input_channels,
+        self.depthwise_conv = nn.Sequential(nn.Conv2d(input_channels, input_channels,
                                                        kernel_size=7, padding=3, groups=input_channels),
-                                             nn.Conv2d(input_channels, input_channels, kernel_size=1)])
+                                             nn.Conv2d(input_channels, input_channels, kernel_size=1))
         if parc_block:
-            self.depthwise_conv = nn.Sequential([ParCBlock(input_channels, init_kernel_size, 
+            self.depthwise_conv = nn.Sequential(ParCBlock(input_channels, init_kernel_size, 
                                                          image_size, depthwise=True),
                                                          nn.Conv2d(kernel_size=1, 
                                                          in_channels=input_channels, 
-                                                         out_channels=input_channels)])
+                                                         out_channels=input_channels))
         
         self.bottleneck_extender = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
         self.bottleneck_reductor = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
@@ -54,7 +54,7 @@ class ParCConvNeXt(nn.Module):
 
         self.third_sequence = nn.Sequential(*([ParCNextNeck(192, 768, 192, 
                                                image_size=(14, 14)) for i in range(6)]+
-                                               [ParCNextNeck(192, 768, 192,
+                                              [ParCNextNeck(192, 768, 192,
                                                image_size=(14, 14), parc_block=True) for i in range(2)]+
                                               [ParCNextNeck(192, 768, 384, 
                                                image_size=(14, 14), parc_block=True)]))
