@@ -9,6 +9,7 @@ class ParCNextNeck(nn.Module):
         if not fast:
             self.parc_block = ParCBlock(input_channels, init_kernel_size, 
                                         image_size, depthwise=True)
+            self.depth_conv = nn.Conv2d(kernel_size=1, in_channels=input_channels, out_channels=input_channels)
         
         self.bottleneck_extender = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
         self.bottleneck_reductor = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
@@ -24,6 +25,7 @@ class ParCNextNeck(nn.Module):
     def forward(self, input):
         x = self.layernorm(input)
         x = self.parc_block(x)
+        x = self.depth_conv(x)
         x = self.bottleneck_extender(x)
         x = nn.GELU()(x)
         x = self.bottleneck_reductor(x)
