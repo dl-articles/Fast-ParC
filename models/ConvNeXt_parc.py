@@ -3,7 +3,7 @@ from layers.parc import ParCBlock
 
 class ParCNextNeck(nn.Module):
     def __init__(self, input_channels, hidden_channels, out_channels, image_size,
-                 init_kernel_size = 10, fast = False):
+                 init_kernel_size = 50, fast = False):
         super().__init__()
         self.layernorm = nn.LayerNorm(normalized_shape=image_size)
         if not fast:
