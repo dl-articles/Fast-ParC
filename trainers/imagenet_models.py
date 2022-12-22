@@ -35,9 +35,9 @@ class ImageNetModel(LightningModule):
         self.bad_steps = 0
         self.data_dir = data_dir
 
-        if self.parc_type == 'basic':
+        if parc_type == 'basic':
             parc_flag = ParcOperatorVariation.BASIC
-        if self.parc_type == 'fast':
+        if parc_type == 'fast':
             parc_flag = ParcOperatorVariation.FAST
         if model_name=="metaformer":
             self.model = metaformer_pppa_s12_224(num_classes=num_classes, variation=parc_flag)
