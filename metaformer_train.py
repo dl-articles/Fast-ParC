@@ -19,7 +19,7 @@ parser.add_argument('-c', '--classes', type=int, default=100)
 parser.add_argument('-n', '--samples', type=int, default=1000)
 parser.add_argument('-b', '--batch', type=int, default=32)
 parser.add_argument('-l', '--lr', type=float, default=1e-3)
-parser.add_agrument('--parc_type', type=str, default="Fast")
+parser.add_agrument('--parc_type', type=str, default="fast")
 # parser.add_argument('-t', '--step_tolerance', type=int)
 # parser.add_argument('-f', '--burnin', type=int)
 
