@@ -14,7 +14,7 @@ parser.add_argument('-d', '--data', type=str)
 parser.add_argument('-s', '--seed', type=int, default=42)
 
 if __name__ == "__main__":
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     args = parser.parse_args()
     root = args.data
     seed = args.seed
@@ -36,6 +36,6 @@ if __name__ == "__main__":
 
     rf = PytorchReceptiveField(metaformer)
 
-    rf.plot_gradient_at(image=image.cpu().numpy())
+    rf.plot_gradient_at(image=image)
 
 
