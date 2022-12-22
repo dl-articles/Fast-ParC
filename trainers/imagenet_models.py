@@ -74,10 +74,10 @@ class ImageNetModel(LightningModule):
         self.log('train_acc', self.train_acc, prog_bar=True)
         self.log('train_f1', self.train_f1, prog_bar=True)
         return loss
-    def training_epoch_end(self, training_step_outputs):
-        if self.step_tolerance:
-            self.min_loss = float('Inf')
-            self.bad_steps = 0
+    # def training_epoch_end(self, training_step_outputs):
+    #     if self.step_tolerance:
+    #         self.min_loss = float('Inf')
+    #         self.bad_steps = 0
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
