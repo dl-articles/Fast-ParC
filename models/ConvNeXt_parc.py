@@ -12,10 +12,7 @@ class ParCNextNeck(nn.Module):
                                              nn.Conv2d(input_channels, input_channels, kernel_size=1))
         if parc_block:
             self.depthwise_conv = nn.Sequential(ParCBlock(input_channels, init_kernel_size, 
-                                                         image_size, depthwise=True),
-                                                         nn.Conv2d(kernel_size=1, 
-                                                         in_channels=input_channels, 
-                                                         out_channels=input_channels))
+                                                         image_size, depthwise=False))
         
         self.bottleneck_extender = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
         self.bottleneck_reductor = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
