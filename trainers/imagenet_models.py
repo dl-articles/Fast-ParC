@@ -35,6 +35,8 @@ class ImageNetModel(LightningModule):
         self.bad_steps = 0
         self.data_dir = data_dir
 
+        print(model_name)
+        print(parc_type)
         if parc_type == 'basic':
             parc_flag = ParcOperatorVariation.BASIC
         if parc_type == 'fast':
