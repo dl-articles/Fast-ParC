@@ -2,6 +2,7 @@ import torch
 from pytorch_lightning import LightningModule
 from torch import nn
 from torch.utils.data import DataLoader
+from models.original_convnext import ParC_ConvNeXt
 from torchmetrics import Accuracy, F1Score
 import torchvision.transforms as transforms
 from torchvision.models import resnet50
@@ -42,6 +43,8 @@ class ImageNetModel(LightningModule):
             self.model = ParCResNet50(num_classes)
         if model_name=="parcconvnext":
             self.model = ParCConvNeXt(num_classes)
+        if model_name=="original":
+            self.model = ParC_ConvNeXt(num_classes=num_classes)
         self.model.train()
 
     def forward(self, x):
