@@ -36,6 +36,6 @@ if __name__ == "__main__":
 
     rf = PytorchReceptiveField(metaformer)
 
-    rf.plot_gradient_at(image=image)
+    rf.plot_gradient_at(fm_id=0, point=(8, 8),image=image)
 
 
