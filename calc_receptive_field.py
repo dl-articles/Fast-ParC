@@ -35,6 +35,7 @@ if __name__ == "__main__":
         return model.to(device)
 
     rf = PytorchReceptiveField(metaformer)
+    rf.compute((224, 224, 3))
 
     rf.plot_gradient_at(fm_id=0, point=(8, 8),image=image)
 
