@@ -1,9 +1,11 @@
 from torch import nn
-from layers.parc import ParCBlock
+from layers.parc_factory import ParCOperator, ParcOperatorVariation
+from layers.parc_block import ParCBlock
 
 class ParCNextNeck(nn.Module):
     def __init__(self, input_channels, hidden_channels, out_channels, image_size,
-                 init_kernel_size = 14, fast = False, parc_block = False):
+                 init_kernel_size = 14, fast = False, parc_block = False, 
+                 variation=ParcOperatorVariation.BASIC):
         super().__init__()
         self.layernorm = nn.LayerNorm(normalized_shape=image_size)
 
@@ -11,8 +13,10 @@ class ParCNextNeck(nn.Module):
                                                        kernel_size=7, padding=3, groups=input_channels),
                                              nn.Conv2d(input_channels, input_channels, kernel_size=1))
         if parc_block:
-            self.depthwise_conv = nn.Sequential(ParCBlock(input_channels, init_kernel_size, 
-                                                         image_size, depthwise=False))
+            self.depthwise_conv = ParCBlock(channels=input_channels, 
+                                               init_kernel_size=init_kernel_size,
+                                               depthwise=False, 
+                                               variation=variation)
         
         self.bottleneck_extender = nn.Conv2d(input_channels, hidden_channels, kernel_size=1)
         self.bottleneck_reductor = nn.Conv2d(hidden_channels, out_channels, kernel_size=1)
@@ -35,31 +39,40 @@ class ParCNextNeck(nn.Module):
         return x + self.projector(input)
 
 class ParCConvNeXt(nn.Module):
-    def __init__(self, classes):
+    def __init__(self, classes, variation=ParcOperatorVariation.BASIC):
         super().__init__()
         self.initial_layer = nn.Conv2d(3, 48, 4, 4)
 
         self.first_sequence = nn.Sequential(*([ParCNextNeck(48, 192, 48,
-                                              image_size=(56, 56)) for i in range(2)]+
+                                              image_size=(56, 56), 
+                                              variation=variation) for i in range(2)]+
                                               [ParCNextNeck(48, 192, 96,
-                                              image_size=(56, 56))]))
+                                              image_size=(56, 56), 
+                                              variation=variation)]))
 
         self.second_sequence = nn.Sequential(*([ParCNextNeck(96, 384, 96, 
-                                               image_size=(28, 28)) for i in range(2)]+
+                                               image_size=(28, 28),
+                                               variation=variation) for i in range(2)]+
                                                [ParCNextNeck(96, 384, 192, 
-                                               image_size=(28, 28))]))
+                                               image_size=(28, 28),
+                                               variation=variation)]))
 
         self.third_sequence = nn.Sequential(*([ParCNextNeck(192, 768, 192, 
-                                               image_size=(14, 14)) for i in range(6)]+
+                                               image_size=(14, 14),
+                                               variation=variation) for i in range(6)]+
                                               [ParCNextNeck(192, 768, 192,
-                                               image_size=(14, 14), parc_block=True) for i in range(2)]+
+                                               image_size=(14, 14), parc_block=True,
+                                               variation=variation) for i in range(2)]+
                                               [ParCNextNeck(192, 768, 384, 
-                                               image_size=(14, 14), parc_block=True)]))
+                                               image_size=(14, 14), parc_block=True, 
+                                               variation=variation)]))
 
         self.fourth_sequence = nn.Sequential(*([ParCNextNeck(384, 1536, 384, 
-                                               image_size=(7, 7)) for i in range(2)]+
+                                               image_size=(7, 7), 
+                                               variation=variation) for i in range(2)]+
                                                [ParCNextNeck(384, 1536, 384, 
-                                               image_size=(7, 7), parc_block=True)]))
+                                               image_size=(7, 7), parc_block=True,
+                                               variation=variation)]))
         
         self.avg_pool = nn.AvgPool2d(kernel_size=7)
         self.linear_classifier = nn.Linear(384, classes)

@@ -1,5 +1,5 @@
 from torch import nn
-from layers.parc import ParCBlock
+from layers.parc_block import ParCBlock
 
 class ParCNeck(nn.Module):
     def __init__(self, input_channels, hidden_channels, out_channels, image_size,

@@ -2,7 +2,7 @@ from collections.abc import Iterable
 
 import torch
 from torch import nn
-from torch.fft import fft, ifft
+from torch import fft, ifft
 
 
 class FastParCUnit(nn.Module):

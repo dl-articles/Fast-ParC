@@ -73,23 +73,3 @@ class ParCUnit(torch.nn.Module):
         if self.orientation == "V":
             X_cat = torch.cat((X, X[:, :, :-1, :]), dim=-2)
         return self.apply_convoution(X_cat)
-
-
-class ParCBlock(nn.Module):
-    def __init__(self, channels, init_kernel_size, use_pe = True,
-                depthwise = False):
-        super().__init__()
-                
-        self.parc_h = ParCUnit(channels//2, init_kernel_size, use_pe = use_pe,
-                orientation="H", depthwise = depthwise)
-                
-        self.parc_v = ParCUnit(channels//2, init_kernel_size, use_pe = use_pe,
-                orientation="V", depthwise = depthwise)
-        
-    def forward(self, input):
-        channels = input.shape[1]
-        input_h = input[:, :channels//2, :, :]
-        input_v = input[:, channels//2:, :, :]
-        output_h = self.parc_h(input_h)
-        output_v = self.parc_v(input_v)
-        return torch.cat((output_h, output_v), dim=1)

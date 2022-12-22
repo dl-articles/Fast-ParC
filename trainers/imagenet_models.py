@@ -2,10 +2,10 @@ import torch
 from pytorch_lightning import LightningModule
 from torch import nn
 from torch.utils.data import DataLoader
-from models.original_convnext import ParC_ConvNeXt
 from torchmetrics import Accuracy, F1Score
 import torchvision.transforms as transforms
 from torchvision.models import resnet50
+from layers.parc_factory import ParcOperatorVariation
 
 from config.metaformer_config import metaformer_pppa_s12_224
 from models.ConvNeXt_parc import ParCConvNeXt
@@ -14,7 +14,7 @@ from dataset.ImageNetKaggle import ImageNetKaggle
 
 
 class ImageNetModel(LightningModule):
-    def __init__(self, data_dir, model_name, lr = 1e-4, batch_size=32,
+    def __init__(self, data_dir, model_name, parc_type, lr = 1e-4, batch_size=32,
                  num_classes = 500, max_samples=None, burnin_steps=0,  step_tolerance = None, lr_factor=0.5):
         super().__init__()
         self.save_hyperparameters()
@@ -34,17 +34,20 @@ class ImageNetModel(LightningModule):
         self.step_tolerance = step_tolerance
         self.bad_steps = 0
         self.data_dir = data_dir
+
+        if self.parc_type == 'basic':
+            parc_flag = ParcOperatorVariation.BASIC
+        if self.parc_type == 'fast':
+            parc_flag = ParcOperatorVariation.FAST
         if model_name=="metaformer":
-            self.model = metaformer_pppa_s12_224(num_classes=num_classes)
+            self.model = metaformer_pppa_s12_224(num_classes=num_classes, variation=parc_flag)
         if model_name=="resnet":
             self.model = resnet50()
             self.model.fc = torch.nn.Linear(2048, num_classes)
         if model_name=="parcresnet":
             self.model = ParCResNet50(num_classes)
         if model_name=="parcconvnext":
-            self.model = ParCConvNeXt(num_classes)
-        if model_name=="original":
-            self.model = ParC_ConvNeXt(num_classes=num_classes)
+            self.model = ParCConvNeXt(num_classes, variation=parc_flag)
         self.model.train()
 
     def forward(self, x):

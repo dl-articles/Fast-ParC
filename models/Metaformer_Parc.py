@@ -75,7 +75,7 @@ class MetaFormerBlock(nn.Module):
             ParCOperator(dim // 2, orientation='V', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe)
         ) if use_parc else nn.Identity()
-        self.gcc_2  = nn.Sequential(
+        self.gcc_2 = nn.Sequential(
             ParCOperator(dim//2, orientation='V', variation=variation,
                          global_kernel_size=global_kernel_size, use_pe=use_pe),
             ParCOperator(dim // 2, orientation='H', variation=variation,
@@ -117,6 +117,7 @@ def basic_blocks(dim,
                  layer_scale_init_value=1e-5,
                  use_parc=True,
                  use_pe=True,
+                 variation=ParcOperatorVariation.FAST
                  ):
 
     blocks = []
@@ -130,6 +131,7 @@ def basic_blocks(dim,
             drop_path=block_dpr,
             use_pe=use_pe,
             layer_scale_init_value=layer_scale_init_value,
+            variation=variation
             ))
     blocks = nn.Sequential(*blocks)
 
@@ -165,6 +167,7 @@ class MetaFormer(nn.Module):
                  add_pos_embs=None,
                  drop_path_rate=0.,
                  use_layer_scale=True, layer_scale_init_value=1e-5,
+                 variation=ParcOperatorVariation.FAST,
                  **kwargs):
 
         super().__init__()
