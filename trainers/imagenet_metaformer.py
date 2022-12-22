@@ -66,10 +66,10 @@ class ImageNetMetaFormer(LightningModule):
         self.log('train_f1', self.train_f1, prog_bar=True)
         return loss
 
-    def training_epoch_end(self, training_step_outputs):
-        if self.step_tolerance:
-            self.min_loss = float('inf')
-            self.bad_steps = 0
+    # def training_epoch_end(self, training_step_outputs):
+    #     if self.step_tolerance:
+    #         self.min_loss = float('inf')
+    #         self.bad_steps = 0
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
