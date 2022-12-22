@@ -19,8 +19,8 @@ parser.add_argument('-c', '--classes', type=int, default=100)
 parser.add_argument('-n', '--samples', type=int, default=1000)
 parser.add_argument('-b', '--batch', type=int, default=32)
 parser.add_argument('-l', '--lr', type=float, default=1e-3)
-parser.add_argument('-t', '--step_tolerance', type=int)
-parser.add_argument('-f', '--burnin', type=int)
+# parser.add_argument('-t', '--step_tolerance', type=int)
+# parser.add_argument('-f', '--burnin', type=int)
 
 
 if __name__ == "__main__":
@@ -38,12 +38,12 @@ if __name__ == "__main__":
     # burnin = args.burnin
     torch.manual_seed(seed)
 
-    logger = WandbLogger(project=project, name=experiment)
+    logger = WandbLogger(project=project, name=experiment, entity="dl-artcls")
 
 
     model = ImageNetMetaFormer(data_dir=dataroot, lr=lr, batch_size=batch,
                                num_classes=classes,
-                               max_samples=max_samples, )
+                               max_samples=max_samples )
 
     logger.watch(model)
     trainer = Trainer(
